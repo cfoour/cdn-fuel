@@ -10,10 +10,11 @@ function SetFuel(vehicle, fuel)
 end
 
 function LoadAnimDict(dict)
-	while (not HasAnimDictLoaded(dict)) do
-		RequestAnimDict(dict)
-		Wait(5)
-	end
+	lib.requestAnimDict(dict)
+end
+
+function RequestAndLoadModel(model)
+    lib.requestModel(model)
 end
 
 function GlobalTax(value)
@@ -27,23 +28,23 @@ end
 function Comma_Value(amount)
 	local formatted = amount
 	while true do
-	  formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
-	  if (k==0) then
-		break
-	  end
+		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+		if (k == 0) then
+			break
+		end
 	end
 	return formatted
 end
 
 function math.percent(percent, maxvalue)
 	if tonumber(percent) and tonumber(maxvalue) then
-		return (maxvalue*percent)/100
+		return (maxvalue * percent) / 100
 	end
 	return false
 end
 
 function Round(num, numDecimalPlaces)
-	local mult = 10^(numDecimalPlaces or 0)
+	local mult = 10 ^ (numDecimalPlaces or 0)
 	return math.floor(num * mult + 0.5) / mult
 end
 
@@ -67,11 +68,11 @@ function CreateBlip(coords, label)
 	local vehicle = GetCurrentVehicleType()
 	local electricbolt = Config.ElectricSprite -- Sprite
 	if vehicle == 'electricvehicle' then
-		SetBlipSprite(blip, electricbolt) -- This is where the fuel thing will get changed into the electric bolt instead of the pump.
-		SetBlipColour(blip, 5)
+		SetBlipSprite(blip, electricbolt)   -- This is where the fuel thing will get changed into the electric bolt instead of the pump.
+		SetBlipColour(blip, 15)
 	else
 		SetBlipSprite(blip, 361)
-		SetBlipColour(blip, 4)
+		SetBlipColour(blip, 6)
 	end
 	SetBlipScale(blip, 0.6)
 	SetBlipDisplay(blip, 4)
@@ -83,63 +84,52 @@ function CreateBlip(coords, label)
 end
 
 function GetClosestVehicle(coords)
-    local ped = PlayerPedId()
-    local vehicles = GetGamePool('CVehicle')
-    local closestDistance = -1
-    local closestVehicle = -1
-    if coords then
-        coords = type(coords) == 'table' and vec3(coords.x, coords.y, coords.z) or coords
-    else
-        coords = GetEntityCoords(ped)
-    end
-    for i = 1, #vehicles, 1 do
-        local vehicleCoords = GetEntityCoords(vehicles[i])
-        local distance = #(vehicleCoords - coords)
-        if closestDistance == -1 or closestDistance > distance then
-            closestVehicle = vehicles[i]
-            closestDistance = distance
-        end
-    end
-    return closestVehicle, closestDistance
+	local vehicles = GetGamePool('CVehicle')
+	local closestDistance = -1
+	local closestVehicle = -1
+	if coords then
+		coords = type(coords) == 'table' and vec3(coords.x, coords.y, coords.z) or coords
+	else
+		coords = GetEntityCoords(cache.ped)
+	end
+	for i = 1, #vehicles, 1 do
+		local vehicleCoords = GetEntityCoords(vehicles[i])
+		local distance = #(vehicleCoords - coords)
+		if closestDistance == -1 or closestDistance > distance then
+			closestVehicle = vehicles[i]
+			closestDistance = distance
+		end
+	end
+	return closestVehicle, closestDistance
 end
 
-
 function IsPlayerNearVehicle()
-	if Config.FuelDebug then
-		print("Checking if player is near a vehicle!")
-	end
 	local vehicle = GetClosestVehicle()
 	local closestVehCoords = GetEntityCoords(vehicle)
-	if #(GetEntityCoords(PlayerPedId(), closestVehCoords)) > 3.0 then
+	if #(GetEntityCoords(cache.ped, closestVehCoords)) > 3.0 then
 		return true
 	end
 	return false
 end
 
 function IsVehicleBlacklisted(veh)
-	if Config.FuelDebug then print("IsVehicleBlacklisted("..tostring(veh)..")") end
 	if veh and veh ~= 0 then
 		veh = string.lower(GetDisplayNameFromVehicleModel(GetEntityModel(veh)))
-		if Config.FuelDebug then print("Vehicle: "..veh) end
 		-- Puts Vehicles In Blacklist if you have electric charging on.
 		if not Config.ElectricVehicleCharging then
 			if Config.ElectricVehicles[veh] and Config.ElectricVehicles[veh].isElectric then
-				if Config.FuelDebug then print("Vehicle: "..veh.." is in the Blacklist.") end
 				return true
 			end
 		end
 
 		if Config.NoFuelUsage[veh] and Config.NoFuelUsage[veh].blacklisted then
-			if Config.FuelDebug then print("Vehicle: "..veh.." is in the Blacklist.") end
 			-- If the veh equals a vehicle in the list then return true.
 			return true
 		end
 
 		-- Default False
-		if Config.FuelDebug then print("Vehicle is not blacklisted.") end
 		return false
 	else
-		if Config.FuelDebug then print("veh is nil!") end
 		return false
 	end
 	-- return true
