@@ -855,7 +855,7 @@ RegisterNetEvent('cdn-fuel:client:jerrycanfinalmenu', function(purchasetype)
 		TriggerServerEvent('cdn-fuel:server:purchaseJerryCan', purchasetype)
 	else
 		QBOX:Notify(
-		purchasetype == 'bank' and Lang:t('not_enough_money_in_bank') or Lang:t('not_enough_money_in_cash'), 'error')
+			purchasetype == 'bank' and Lang:t('not_enough_money_in_bank') or Lang:t('not_enough_money_in_cash'), 'error')
 		--if purchasetype == 'bank' then QBOX:Notify(Lang:t('not_enough_money_in_bank'), 'error') end
 		--if purchasetype == 'cash' then QBOX:Notify(Lang:t('not_enough_money_in_cash'), 'error') end
 	end
@@ -1245,12 +1245,12 @@ RegisterNetEvent('cdn-syphoning:syphon', function(data)
 					end
 					if tonumber(syphonAmount) > maxsyphon then
 						QBOX:Notify(
-						Lang:t('syphon_kit_cannot_fit_1') .. fitamount .. Lang:t('syphon_kit_cannot_fit_2'), 'error')
+							Lang:t('syphon_kit_cannot_fit_1') .. fitamount .. Lang:t('syphon_kit_cannot_fit_2'), 'error')
 						return
 					end
 					if currentsyphonamount + syphonAmount > Config.SyphonKitCap then
 						QBOX:Notify(
-						Lang:t('syphon_kit_cannot_fit_1') .. fitamount .. Lang:t('syphon_kit_cannot_fit_2'), 'error')
+							Lang:t('syphon_kit_cannot_fit_1') .. fitamount .. Lang:t('syphon_kit_cannot_fit_2'), 'error')
 						return
 					end
 					if (tonumber(syphonAmount) <= tonumber(cargasamount)) then
@@ -1389,7 +1389,8 @@ RegisterNetEvent('cdn-fuel:client:grabnozzle:special', function()
 		Wait(100)
 		local nozzlePos = GetEntityCoords(SpecialFuelNozzleObj)
 		nozzlePos = GetOffsetFromEntityInWorldCoords(SpecialFuelNozzleObj, 0.0, -0.033, -0.195)
-		AttachEntitiesToRope(Rope, pump, SpecialFuelNozzleObj, pumpCoords.x, pumpCoords.y, pumpCoords.z + 2.1, nozzlePos.x, nozzlePos.y, nozzlePos.z, length, false, false, nil, nil)
+		AttachEntitiesToRope(Rope, pump, SpecialFuelNozzleObj, pumpCoords.x, pumpCoords.y, pumpCoords.z + 2.1,
+			nozzlePos.x, nozzlePos.y, nozzlePos.z, length, false, false, nil, nil)
 	end
 
 	CreateThread(function()
@@ -1436,117 +1437,110 @@ AddEventHandler('onResourceStart', function(resource)
 
 				AirSeaFuelZones[k] = {} -- Make a new table inside of the Vehicle Pullout Zones representing this zone.
 
-				-- Get Coords for Zone from Config.
-				AirSeaFuelZones[k].zoneCoords = currentLocation['PolyZone']['coords']
-
-				-- Grab MinZ & MaxZ from Config.
-				local minimumZ, maximumZ = currentLocation['PolyZone']['minmax']['min'], currentLocation['PolyZone']['minmax']['max']
-
 				-- Create Zone
-				AirSeaFuelZones[k].PolyZone = PolyZone:Create(AirSeaFuelZones[k].zoneCoords, {
-					name = GeneratedName,
-					minZ = minimumZ,
-					maxZ = maximumZ,
-					debugPoly = Config.PolyDebug
+				AirSeaFuelZones[k] = lib.zones.poly({
+					points = currentLocation.coords,
+					thickness = currentLocation.thickness,
+					debug = Config.PolyDebug,
 				})
 
-				AirSeaFuelZones[k].name = GeneratedName
-
 				-- Setup onPlayerInOut Events for zone that is created.
-				AirSeaFuelZones[k].PolyZone:onPlayerInOut(function(isPointInside)
-					if isPointInside then
-						local canUseThisStation = false
-						if Config.AirAndWaterVehicleFueling.locations[i].whitelist.enabled then
-							local whitelisted_jobs = Config.AirAndWaterVehicleFueling.locations[i].whitelist.whitelisted_jobs
-							local plyJob = QBX.PlayerData.job
+				AirSeaFuelZones[k].inside = function()
+					local canUseThisStation = false
+					if currentLocation.whitelist.enabled then
+						local whitelisted_jobs = currentLocation.whitelist.whitelisted_jobs
+						local plyJob = QBX.PlayerData.job
 
-							if type(whitelisted_jobs) == 'table' then
-								for i = 1, #whitelisted_jobs, 1 do
-									if plyJob.name == whitelisted_jobs[i] then
-										if Config.AirAndWaterVehicleFueling.locations[i].whitelist.on_duty_only then
-											if plyJob.onduty == true then
-												canUseThisStation = true
-											else
-												canUseThisStation = false
-											end
-										else
+						if type(whitelisted_jobs) == 'table' then
+							for i = 1, #whitelisted_jobs, 1 do
+								if plyJob.name == whitelisted_jobs[i] then
+									if currentLocation.whitelist.on_duty_only then
+										if plyJob.onduty == true then
 											canUseThisStation = true
+										else
+											canUseThisStation = false
 										end
+									else
+										canUseThisStation = true
 									end
 								end
 							end
-						else
-							canUseThisStation = true
-						end
-
-						if canUseThisStation then
-							-- Inside
-							PlayerInSpecialFuelZone = true
-							inGasStation = true
-							RefuelingType = 'special'
-
-							local DrawText = Config.AirAndWaterVehicleFueling.locations[i].draw_text
-
-							lib.showTextUI(DrawText, { position = 'left-center' })
-
-							CreateThread(function()
-								while PlayerInSpecialFuelZone do
-									Wait(3000)
-									vehicle = GetClosestVehicle()
-								end
-							end)
-
-							CreateThread(function()
-								while PlayerInSpecialFuelZone do
-									Wait(0)
-									if PlayerInSpecialFuelZone ~= true then
-										break
-									end
-									if IsControlJustReleased(0, Config.AirAndWaterVehicleFueling.refuel_button) --[[ Control in Config ]] then
-										local vehCoords = GetEntityCoords(vehicle)
-										local dist = #(GetEntityCoords(cache.ped) - vehCoords)
-
-										if not HoldingSpecialNozzle then
-											QBOX:Notify(Lang:t('no_nozzle'), 'error', 1250)
-										elseif dist > 4.5 then
-											QBOX:Notify(Lang:t('vehicle_too_far'), 'error', 1250)
-										elseif IsPedInAnyVehicle(cache.ped, true) then
-											QBOX:Notify(Lang:t('inside_vehicle'), 'error', 1250)
-										else
-											TriggerEvent('cdn-fuel:client:RefuelMenu', 'special')
-										end
-									end
-								end
-							end)
 						end
 					else
-						if HoldingSpecialNozzle then
-							QBOX:Notify(Lang:t('nozzle_cannot_reach'), 'error')
-							HoldingSpecialNozzle = false
-							if Config.PumpHose then
-								RopeUnloadTextures()
-								DeleteObject(Rope)
-							end
-							DeleteObject(SpecialFuelNozzleObj)
-						end
-						if Config.PumpHose then
-							if Rope ~= nil then
-								RopeUnloadTextures()
-								DeleteObject(Rope)
-							end
-						end
-						-- Outside
-						lib.hideTextUI()
-						PlayerInSpecialFuelZone = false
-						inGasStation = false
-						RefuelingType = nil
+						canUseThisStation = true
 					end
-				end)
+
+					if canUseThisStation then
+						-- Inside
+						PlayerInSpecialFuelZone = true
+						inGasStation = true
+						RefuelingType = 'special'
+
+						local DrawText = currentLocation.draw_text
+
+						lib.showTextUI(DrawText, { position = 'left-center' })
+
+						CreateThread(function()
+							while PlayerInSpecialFuelZone do
+								Wait(3000)
+								vehicle = GetClosestVehicle()
+							end
+						end)
+
+						CreateThread(function()
+							while PlayerInSpecialFuelZone do
+								Wait(0)
+								if PlayerInSpecialFuelZone ~= true then
+									break
+								end
+								if IsControlJustReleased(0, Config.AirAndWaterVehicleFueling.refuel_button) --[[ Control in Config ]] then
+									local vehCoords = GetEntityCoords(vehicle)
+									local dist = #(GetEntityCoords(cache.ped) - vehCoords)
+
+									if not HoldingSpecialNozzle then
+										QBOX:Notify(Lang:t('no_nozzle'), 'error', 1250)
+									elseif dist > 4.5 then
+										QBOX:Notify(Lang:t('vehicle_too_far'), 'error', 1250)
+									elseif IsPedInAnyVehicle(cache.ped, true) then
+										QBOX:Notify(Lang:t('inside_vehicle'), 'error', 1250)
+									else
+										TriggerEvent('cdn-fuel:client:RefuelMenu', 'special')
+									end
+								end
+							end
+						end)
+					end
+				end
+
+				AirSeaFuelZones[k].onExit = function()
+					if HoldingSpecialNozzle then
+						QBOX:Notify(Lang:t('nozzle_cannot_reach'), 'error')
+						HoldingSpecialNozzle = false
+						if Config.PumpHose then
+							RopeUnloadTextures()
+							DeleteObject(Rope)
+						end
+						DeleteObject(SpecialFuelNozzleObj)
+					end
+					if Config.PumpHose then
+						if Rope ~= nil then
+							RopeUnloadTextures()
+							DeleteObject(Rope)
+						end
+					end
+					-- Outside
+					lib.hideTextUI()
+					PlayerInSpecialFuelZone = false
+					inGasStation = false
+					RefuelingType = nil
+				end
+
 
 				if currentLocation.prop then
 					local model = currentLocation.prop.model
-					local modelCoords = currentLocation['prop']['coords']
-					local heading = modelCoords[4] - 180.0 AirSeaFuelZones[k].prop = CreateObject(model, modelCoords.x, modelCoords.y, modelCoords.z, false, true, true)
+					local modelCoords = currentLocation.prop.coords
+					local heading = modelCoords[4] - 180.0
+					AirSeaFuelZones[k].prop = CreateObject(model, modelCoords.x, modelCoords.y, modelCoords.z, false, true, true)
 					SetEntityHeading(AirSeaFuelZones[k].prop, heading)
 					FreezeEntityPosition(AirSeaFuelZones[k].prop, true)
 				else
@@ -1557,9 +1551,9 @@ AddEventHandler('onResourceStart', function(resource)
 	end
 end)
 
-RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
+--[[RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
 	for i = 1, #Config.AirAndWaterVehicleFueling['locations'], 1 do
-		local currentLocation = Config.AirAndWaterVehicleFueling.locations[i]
+		local currentLocation = currentLocation
 		local k = #AirSeaFuelZones + 1
 		local GeneratedName = ('air_sea_fuel_zone_%s'):format(k)
 
@@ -1585,14 +1579,14 @@ RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
 		AirSeaFuelZones[k].PolyZone:onPlayerInOut(function(isPointInside)
 			if isPointInside then
 				local canUseThisStation = false
-				if Config.AirAndWaterVehicleFueling.locations[i].whitelist.enabled then
-					local whitelisted_jobs = Config.AirAndWaterVehicleFueling.locations[i].whitelist.whitelisted_jobs
+				if currentLocation.whitelist.enabled then
+					local whitelisted_jobs = currentLocation.whitelist.whitelisted_jobs
 					local plyJob = QBX.PlayerData.job
 
 					if type(whitelisted_jobs) == 'table' then
 						for i = 1, #whitelisted_jobs, 1 do
 							if plyJob.name == whitelisted_jobs[i] then
-								if Config.AirAndWaterVehicleFueling.locations[i].whitelist.on_duty_only then
+								if currentLocation.whitelist.on_duty_only then
 									if plyJob.onduty == true then
 										canUseThisStation = true
 									else
@@ -1614,7 +1608,7 @@ RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
 					inGasStation = true
 					RefuelingType = 'special'
 
-					local DrawText = Config.AirAndWaterVehicleFueling.locations[i].draw_text
+					local DrawText = currentLocation.draw_text
 
 					lib.showTextUI(DrawText, { position = 'left-center' })
 
@@ -1631,7 +1625,7 @@ RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
 							if PlayerInSpecialFuelZone ~= true then
 								break
 							end
-							if IsControlJustReleased(0, Config.AirAndWaterVehicleFueling['refuel_button']) --[[ Control in Config ]] then
+							if IsControlJustReleased(0, Config.AirAndWaterVehicleFueling['refuel_button']) then
 								local vehCoords = GetEntityCoords(vehicle)
 								local dist = #(GetEntityCoords(cache.ped) - vehCoords)
 
@@ -1675,18 +1669,19 @@ RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
 		if currentLocation.prop then
 			local model = currentLocation.prop.model
 			local modelCoords = currentLocation.prop.coords
-			local heading = modelCoords[4] - 180.0 AirSeaFuelZones[k].prop = CreateObject(model, modelCoords.x, modelCoords.y, modelCoords.z, false, true, true)
+			local heading = modelCoords[4] - 180.0
+			AirSeaFuelZones[k].prop = CreateObject(model, modelCoords.x, modelCoords.y, modelCoords.z, false, true, true)
 			SetEntityHeading(AirSeaFuelZones[k].prop, heading)
 			FreezeEntityPosition(AirSeaFuelZones[k].prop, true)
 		else
 			return
 		end
 	end
-end)
+end) ]]
 
 RegisterNetEvent('QBCore:Server:OnPlayerUnload', function()
 	for i = 1, #AirSeaFuelZones, 1 do
-		AirSeaFuelZones[i].PolyZone:destroy()
+		AirSeaFuelZones[i]:remove()
 		if AirSeaFuelZones[i].prop then
 			DeleteObject(AirSeaFuelZones[i].prop)
 		end
@@ -1814,7 +1809,8 @@ CreateThread(function()
 							-- Play Sound, if enabled in config.
 							if Config.VehicleShutoffOnLowFuel['sounds']['enabled'] then
 								RequestAmbientAudioBank('DLC_PILOT_ENGINE_FAILURE_SOUNDS', 0)
-								PlaySoundFromEntity(l_2613, 'Landing_Tone', vehPedIsIn, 'DLC_PILOT_ENGINE_FAILURE_SOUNDS', false, 0)
+								PlaySoundFromEntity(l_2613, 'Landing_Tone', vehPedIsIn, 'DLC_PILOT_ENGINE_FAILURE_SOUNDS',
+									false, 0)
 								Wait(1500)
 								StopSound(l_2613)
 							end
@@ -1830,8 +1826,8 @@ CreateThread(function()
 	end
 end)
 
-if Config.VehicleShutoffOnLowFuel['shutOffLevel'] == 0 then
-	Config.VehicleShutoffOnLowFuel['shutOffLevel'] = 0.55
+if Config.VehicleShutoffOnLowFuel.shutOffLevel == 0 then
+	Config.VehicleShutoffOnLowFuel.shutOffLevel = 0.55
 end
 
 -- This loop does use quite a bit of performance, but,

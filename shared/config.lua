@@ -19,16 +19,14 @@ Config.PossibleDeliveryTrucks = {
 Config.DeliveryTruckSpawns = {
     trailer = vector4(1724.0, -1649.7, 112.57, 194.24),
     truck = vector4(1727.08, -1664.01, 112.62, 189.62),
-    PolyZone = {
-        coords = {
-            vector2(1724.62, -1672.36),
-            vector2(1719.01, -1648.33),
-            vector2(1730.99, -1645.62),
-            vector2(1734.42, -1673.32),
-        },
-        minz = 110.0,
-        maxz = 115.0,
-    }
+    coords = {
+        vector2(1724.62, -1672.36),
+        vector2(1719.01, -1648.33),
+        vector2(1730.99, -1645.62),
+        vector2(1734.42, -1673.32),
+    },
+    thickness = 5.5,
+
 }
 -- 2.1.1 End
 
@@ -60,7 +58,7 @@ Config.RopeType = { fuel = 1, electric = 1 }
 
 Config.FaceTowardsVehicle = true -- Ped will turn towards the entity's boot bone for refueling, sometimes can result in incorrect nozzle placement when refueling.
 Config.VehicleShutoffOnLowFuel = {
-    shutOffLevel = 0,
+    shutOffLevel = 0.55,
     sounds = {
         enabled = true,
         audio_bank = 'DLC_PILOT_ENGINE_FAILURE_SOUNDS',
@@ -184,18 +182,13 @@ Config.AirAndWaterVehicleFueling = {
     enabled = false,
     locations = {
         [1] = {
-            PolyZone = {
-                coords = {
-                    vector2(-701.34, -1441.48),
-                    vector2(-728.05, -1473.15),
-                    vector2(-712.1, -1486.4),
-                    vector2(-685.58, -1454.86),
-                },
-                minmax = {
-                    min = 4.00,
-                    max = 10.50
-                }
+            coords = {
+                vector2(-701.34, -1441.48),
+                vector2(-728.05, -1473.15),
+                vector2(-712.1, -1486.4),
+                vector2(-685.58, -1454.86),
             },
+            thickness = 5.5,
             draw_text = '[G] Refuel Aircraft',
             type = 'air',
             whitelist = {
@@ -209,18 +202,14 @@ Config.AirAndWaterVehicleFueling = {
             }
         },
         [2] = {
-            PolyZone = {
-                coords = {
-                    vector2(-793.1, -1482.94),
-                    vector2(-786.39, -1500.85),
-                    vector2(-809.39, -1508.94),
-                    vector2(-817.48, -1491.62),
-                },
-                minmax = {
-                    min = -5.00,
-                    max = 8.50
-                }
+            coords = {
+                vector2(-793.1, -1482.94),
+                vector2(-786.39, -1500.85),
+                vector2(-809.39, -1508.94),
+                vector2(-817.48, -1491.62),
             },
+            thickness = 5.5,
+
             draw_text = '[G] Refuel Watercraft',
             type = 'water',
             whitelist = {
@@ -234,18 +223,14 @@ Config.AirAndWaterVehicleFueling = {
             }
         },
         [3] = {
-            PolyZone = {
-                coords = {
-                    vector2(-1133.49, -2860.32),
-                    vector2(-1143.33, -2877.61),
-                    vector2(-1191.03, -2850.14),
-                    vector2(-1180.98, -2832.84),
-                },
-                minmax = {
-                    min = 12.50,
-                    max = 18.50
-                }
+            coords = {
+                vector2(-1133.49, -2860.32),
+                vector2(-1143.33, -2877.61),
+                vector2(-1191.03, -2850.14),
+                vector2(-1180.98, -2832.84),
             },
+            thickness = 5.5,
+
             draw_text = '[G] Refuel Helicopter',
             type = 'air',
             whitelist = {
@@ -259,18 +244,14 @@ Config.AirAndWaterVehicleFueling = {
             }
         },
         [4] = {
-            PolyZone = {
-                coords = {
-                    vector2(-1124.63, -2865.31),
-                    vector2(-1134.74, -2882.56),
-                    vector2(-1108.76, -2897.71),
-                    vector2(-1099.04, -2880.39),
-                },
-                minmax = {
-                    min = 12.50,
-                    max = 18.50
-                }
+            coords = {
+                vector2(-1124.63, -2865.31),
+                vector2(-1134.74, -2882.56),
+                vector2(-1108.76, -2897.71),
+                vector2(-1099.04, -2880.39),
             },
+            thickness = 5.5,
+
             draw_text = '[G] Refuel Helicopter',
             type = 'air',
             whitelist = {
@@ -284,18 +265,14 @@ Config.AirAndWaterVehicleFueling = {
             }
         },
         [5] = {
-            PolyZone = {
-                coords = {
-                    vector2(1764.15, 3226.34),
-                    vector2(1758.66, 3246.44),
-                    vector2(1777.28, 3250.51),
-                    vector2(1781.89, 3230.8),
-                },
-                minmax = {
-                    min = 40.50,
-                    max = 47.50
-                }
+            coords = {
+                vector2(1764.15, 3226.34),
+                vector2(1758.66, 3246.44),
+                vector2(1777.28, 3250.51),
+                vector2(1781.89, 3230.8),
             },
+            thickness = 5.5,
+
             draw_text = '[G] Refuel Helicopter',
             type = 'air',
             whitelist = {
