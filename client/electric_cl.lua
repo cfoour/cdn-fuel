@@ -184,7 +184,7 @@ RegisterNetEvent('cdn-fuel:client:electric:SendMenuToServer', function()
         end
     else
         if AwaitingElectricCheck then
-            if Config.ElectricVehicles[vehiclename] and Config.ElectricVehicles[vehiclename].isElectric then
+            if Config.ElectricVehicles[vehiclename] then
                 AwaitingElectricCheck = false
                 FoundElectricVehicle = true
                 Wait(50)
@@ -201,20 +201,16 @@ RegisterNetEvent('cdn-fuel:client:electric:SendMenuToServer', function()
     end
 end)
 RegisterNetEvent('cdn-fuel:client:electric:ChargeVehicle', function(data)
-    if not Config.RenewedPhonePayment then
-        purchasetype = data.purchasetype
-    elseif data.purchasetype == 'cash' then
+    if data.purchasetype == 'cash' then
         purchasetype = 'cash'
     else
-        purchasetype = RefuelPurchaseType
+        purchasetype = data.purchasetype
     end
 
-    if not Config.RenewedPhonePayment then
-        amount = data.fuelamounttotal
-    elseif data.purchasetype == 'cash' then
+    if data.purchasetype == 'cash' then
         amount = data.fuelamounttotal
     elseif not data.fuelamounttotal then
-        amount = RefuelPossibleAmount
+        amount = data.fuelamounttotal
     end
 
     if not HoldingElectricNozzle then return end
@@ -264,7 +260,7 @@ RegisterNetEvent('cdn-fuel:client:electric:ChargeVehicle', function(data)
 
     local refillCost = (fuelamount * FuelPrice) + GlobalTax(fuelamount * FuelPrice)
     local vehicle = GetClosestVehicle()
-    local ped = PlayerPedId()
+    local ped = cache.ped
     local time = amount * Config.RefuelTime
     if amount < 10 then time = 10 * Config.RefuelTime end
     local vehicleCoords = GetEntityCoords(vehicle)

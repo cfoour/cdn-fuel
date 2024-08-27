@@ -1,8 +1,8 @@
 ![Codine Development Fuel Script Banner](https://i.imgur.com/qVOMMvW.png)
 
-# _CDN-Fuel (2.1.9)_ 
+# _CDN-Fuel_ 
 
-A highly in-depth fuel system for **FiveM** with support for the **QBCore Framework & QBox Remastered**.
+A highly in-depth fuel system for **FiveM** with support for the **QBox**.
 
 # _Lastest Patch Information_
 
@@ -341,7 +341,7 @@ function ToggleEngine(veh)
                     else
                         if not NotifyCooldown then
                             RequestAmbientAudioBank("DLC_PILOT_ENGINE_FAILURE_SOUNDS", 0)
-                            PlaySoundFromEntity(l_2613, "Landing_Tone", PlayerPedId(), "DLC_PILOT_ENGINE_FAILURE_SOUNDS", 0, 0)
+                            PlaySoundFromEntity(l_2613, "Landing_Tone", cache.ped, "DLC_PILOT_ENGINE_FAILURE_SOUNDS", 0, 0)
                             NotifyCooldown = true
                             QBCore.Functions.Notify('No fuel..', 'error')
                             Wait(1500)

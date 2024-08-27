@@ -42,7 +42,8 @@ RegisterNetEvent('cdn-fuel:server:PayForFuel', function(amount, purchasetype, Fu
 		moneyremovetype = 'cash'
 	end
 	local payString = Lang:t('menu_pay_label_1') .. FuelPrice .. Lang:t('menu_pay_label_2')
-	if electric then payString = Lang:t('menu_electric_payment_label_1') ..FuelPrice .. Lang:t('menu_electric_payment_label_2') end
+	if electric then payString = Lang:t('menu_electric_payment_label_1') ..
+		FuelPrice .. Lang:t('menu_electric_payment_label_2') end
 	Player.Functions.RemoveMoney(moneyremovetype, total, payString)
 end)
 
@@ -79,11 +80,9 @@ end
 if Config.UseSyphoning then
 	QBOX:CreateUseableItem('syphoningkit', function(source, item)
 		local src = source
-		if Config.Ox.Inventory then
-			if item.metadata.cdn_fuel == nil then
-				item.metadata.cdn_fuel = '0'
-				exports.ox_inventory:SetMetadata(src, item.slot, item.metadata)
-			end
+		if item.metadata.cdn_fuel == nil then
+			item.metadata.cdn_fuel = '0'
+			exports.ox_inventory:SetMetadata(src, item.slot, item.metadata)
 		end
 		TriggerClientEvent('cdn-syphoning:syphon:menu', src, item)
 	end)
@@ -95,44 +94,42 @@ RegisterNetEvent('cdn-fuel:info', function(type, amount, srcPlayerData, itemdata
 	local srcPlayerData = srcPlayerData
 	local ItemName = itemdata.name
 
-	if Config.Ox.Inventory then
-		if itemdata == 'jerrycan' then
-			if amount < 1 or amount > Config.JerryCanCap then
-				return
-			end
-		elseif itemdata == 'syphoningkit' then
-			if amount < 1 or amount > Config.SyphonKitCap then
-				return
-			end
+	if itemdata == 'jerrycan' then
+		if amount < 1 or amount > Config.JerryCanCap then
+			return
 		end
-		if ItemName ~= nil then
-			-- Ignore --
-			itemdata.metadata = itemdata.metadata
-			itemdata.slot = itemdata.slot
-			if ItemName == 'jerrycan' then
-				local fuel_amount = tonumber(itemdata.metadata.cdn_fuel)
-				if type == 'add' then
-					fuel_amount = fuel_amount + amount
-					itemdata.metadata.cdn_fuel = tostring(fuel_amount)
-					exports.ox_inventory:SetMetadata(src, itemdata.slot, itemdata.metadata)
-				elseif type == 'remove' then
-					fuel_amount = fuel_amount - amount
-					itemdata.metadata.cdn_fuel = tostring(fuel_amount)
-					exports.ox_inventory:SetMetadata(src, itemdata.slot, itemdata.metadata)
-				else
-					if Config.FuelDebug then print('error, type is invalid!') end
-				end
-			elseif ItemName == 'syphoningkit' then
-				local fuel_amount = tonumber(itemdata.metadata.cdn_fuel)
-				if type == 'add' then
-					fuel_amount = fuel_amount + amount
-					itemdata.metadata.cdn_fuel = tostring(fuel_amount)
-					exports.ox_inventory:SetMetadata(src, itemdata.slot, itemdata.metadata)
-				elseif type == 'remove' then
-					fuel_amount = fuel_amount - amount
-					itemdata.metadata.cdn_fuel = tostring(fuel_amount)
-					exports.ox_inventory:SetMetadata(src, itemdata.slot, itemdata.metadata)
-				end
+	elseif itemdata == 'syphoningkit' then
+		if amount < 1 or amount > Config.SyphonKitCap then
+			return
+		end
+	end
+	if ItemName ~= nil then
+		-- Ignore --
+		itemdata.metadata = itemdata.metadata
+		itemdata.slot = itemdata.slot
+		if ItemName == 'jerrycan' then
+			local fuel_amount = tonumber(itemdata.metadata.cdn_fuel)
+			if type == 'add' then
+				fuel_amount = fuel_amount + amount
+				itemdata.metadata.cdn_fuel = tostring(fuel_amount)
+				exports.ox_inventory:SetMetadata(src, itemdata.slot, itemdata.metadata)
+			elseif type == 'remove' then
+				fuel_amount = fuel_amount - amount
+				itemdata.metadata.cdn_fuel = tostring(fuel_amount)
+				exports.ox_inventory:SetMetadata(src, itemdata.slot, itemdata.metadata)
+			else
+				return
+			end
+		elseif ItemName == 'syphoningkit' then
+			local fuel_amount = tonumber(itemdata.metadata.cdn_fuel)
+			if type == 'add' then
+				fuel_amount = fuel_amount + amount
+				itemdata.metadata.cdn_fuel = tostring(fuel_amount)
+				exports.ox_inventory:SetMetadata(src, itemdata.slot, itemdata.metadata)
+			elseif type == 'remove' then
+				fuel_amount = fuel_amount - amount
+				itemdata.metadata.cdn_fuel = tostring(fuel_amount)
+				exports.ox_inventory:SetMetadata(src, itemdata.slot, itemdata.metadata)
 			end
 		end
 	end

@@ -201,10 +201,6 @@ RegisterNetEvent('cdn-fuel:station:server:fuelpickup:finished', function(locatio
             MySQL.Async.execute('UPDATE fuel_stations SET fuel = ? WHERE `location` = ?', { FuelPickupSent[location].refuelAmount, location })
             QBOX:Notify(src, string.format(Lang:t("fuel_pickup_success"), tostring(tonumber(FuelPickupSent[location].refuelAmount))), 'success')
             -- This will print player information just in case someone figures out a way to exploit this.
-            if Config.FuelDebug then
-                print("User successfully dropped off fuel truck, so we are updating the fuel level and clearing the pickup table. SQL Execute Update: fuel_station level to: " ..
-                FuelPickupSent[location].refuelAmount .. " | Source: " .. src .. " | Citizen Id: " .. cid .. ".")
-            end
             FuelPickupSent[location] = nil
         else
             -- They are probably exploiting in some way/shape/form.
@@ -236,7 +232,7 @@ lib.callback.register('cdn-fuel:server:locationpurchased', function(source, loca
             return owned
         end
     else
-        if Config.FuelDebug then print("No Result Fetched!!") end
+       return
     end
 end)
 

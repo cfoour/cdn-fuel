@@ -1,5 +1,4 @@
 Config = {}
-Config.FuelDebug = false                -- Used for debugging, although there are not many areas in yet (Default: false) + Enables Setfuel Commands (0, 50, 100).
 Config.PolyDebug = false                -- Enables PolyZones Debugging to see PolyZones!
 Config.ShowNearestGasStationOnly = true -- When enabled, only the nearest gas stations will be shown on the map.
 Config.LeaveEngineRunning = false       -- When true, the vehicle's engine will be left running upon exit if the player *HOLDS* F.
@@ -17,16 +16,15 @@ Config.PossibleDeliveryTrucks = {
     'phantom3', --  This is a fast version of the normal phantom.
 }
 Config.DeliveryTruckSpawns = {
-    trailer = vector4(1724.0, -1649.7, 112.57, 194.24),
-    truck = vector4(1727.08, -1664.01, 112.62, 189.62),
+    trailer = vec4(1724.0, -1649.7, 112.57, 194.24),
+    truck = vec4(1727.08, -1664.01, 112.62, 189.62),
     coords = {
-        vector2(1724.62, -1672.36),
-        vector2(1719.01, -1648.33),
-        vector2(1730.99, -1645.62),
-        vector2(1734.42, -1673.32),
+        vec3(1724.62, -1672.36, 112.0),
+        vec3(1719.01, -1648.33, 112.0),
+        vec3(1730.99, -1645.62, 112.0),
+        vec3(1734.42, -1673.32, 112.0),
     },
     thickness = 5.5,
-
 }
 -- 2.1.1 End
 
@@ -44,14 +42,6 @@ Config.EmergencyServicesDiscount = {
     }
 }
 
-Config.Ox = {
-    Inventory = true, -- Uses OX_Inventory's metadata instead of QB-Inventory's.
-    Menu = true,      -- Uses OX Libraries instead of qb-menu.
-    Input = true,     -- Uses Ox Input Dialog instead of qb-input.
-    DrawText = true,  -- Uses Ox DrawText instead of qb-core DrawText.
-    Progress = true   -- Uses Ox ProgressBar instead of progressbar.
-}
-
 Config.PumpHose = true -- If true, it creates a hose from the pump to the nozzle the client is holding, to give it a more realistic feel.
 
 Config.RopeType = { fuel = 1, electric = 1 }
@@ -67,9 +57,6 @@ Config.VehicleShutoffOnLowFuel = {
 }
 
 -- 2.1.0 End
-
--- Phone --
-Config.RenewedPhonePayment = false -- Enables use of Renewed-Phone Payment System and Notifications
 
 -- Syphoning --
 Config.UseSyphoning = true         -- Follow the Syphoning Install Guide to enable this option!
@@ -112,31 +99,41 @@ Config.OneStationPerPerson = true           -- This prevents players that alread
 Config.ElectricVehicleCharging = true -- When true, electric vehicles will actually consume resources and decrease 'Fuel / Battery' while driving. This means players will have to recharge their vehicle!
 Config.ElectricChargingPrice = 4      -- Per 'KW'. This value is multiplied times the amount of electricity someone put into their vehicle, to constitute the final cost of the charge. Players whom own the gas station will not recieve the money from electric charging.
 
-Config.ElectricVehicles = {           -- List of Electric Vehicles in the Base Game.
-    surge = { isElectric = true },
-    iwagen = { isElectric = true },
-    voltic = { isElectric = true },
-    voltic2 = { isElectric = true },
-    raiden = { isElectric = true },
-    cyclone = { isElectric = true },
-    tezeract = { isElectric = true },
-    neon = { isElectric = true },
-    omnisegt = { isElectric = true },
-    caddy = { isElectric = true },
-    caddy2 = { isElectric = true },
-    caddy3 = { isElectric = true },
-    airtug = { isElectric = true },
-    rcbandito = { isElectric = true },
-    imorgon = { isElectric = true },
-    dilettante = { isElectric = true },
-    khamelion = { isElectric = true },
+
+-- Thanks a lot to https://www.gtabase.com/grand-theft-auto-v/guides/list-of-vehicles-in-gta-5-gta-online-by-feature?feature=electric
+
+Config.ElectricVehicles = { -- List of Electric Vehicles in the Base Game.
+    -- Thanks a lot to https://www.gtabase.com/grand-theft-auto-v/guides/list-of-vehicles-in-gta-5-gta-online-by-feature?feature=electric
+    'airtug',
+    'caddy',
+    'caddy2',
+    'caddy3',
+    'cyclone',
+    'cyclone2',
+    'dilettante',
+    'dilettante2',
+    'envisage',
+    'iwagen',
+    'inductor',
+    'inductor2',
+    'khamelion',
+    'coureur',
+    'neon',
+    'omnisegt',
+    'pipistrello',
+    'raiden',
+    'voltic2',
+    'surge',
+    'tezeract',
+    'virtue',
+    'voltic'
 }
 
 Config.ElectricSprite = 620        -- This is for when the player is in an electric charger, the blips with change to this sprite. (Sprite with a car with a bolt going through it: 620)
 Config.ElectricChargerModel = true -- If you wish, you can set this to false to add your own props, or use a ymap for the props instead.
 
-Config.NoFuelUsage = {             -- This is for you to put vehicles that you don't want to use fuel.
-    bmx = { blacklisted = true },
+Config.NoFuelUsage = { -- This is for you to put vehicles that you don't want to use fuel.
+    'bmx',
 }
 
 Config.Classes = { -- Class multipliers. If you want SUVs to use less fuel, you can change it to anything under 1.0, and vise versa.
@@ -197,7 +194,7 @@ Config.AirAndWaterVehicleFueling = {
                 whitelisted_jobs = { 'police', 'ambulance' }
             },
             prop = {
-                model = 'prop_gas_pump_1d',
+                model = `prop_gas_pump_1d`,
                 coords = vector4(-706.13, -1464.14, 4.04, 320.0)
             }
         },
@@ -209,7 +206,6 @@ Config.AirAndWaterVehicleFueling = {
                 vector2(-817.48, -1491.62),
             },
             thickness = 5.5,
-
             draw_text = '[G] Refuel Watercraft',
             type = 'water',
             whitelist = {

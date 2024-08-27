@@ -28,7 +28,7 @@ end
 function Comma_Value(amount)
 	local formatted = amount
 	while true do
-		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
+		formatted, k = string.gsub(formatted, '^(-?%d+)(%d%d%d)', '%1,%2')
 		if (k == 0) then
 			break
 		end
@@ -43,20 +43,15 @@ function math.percent(percent, maxvalue)
 	return false
 end
 
-function Round(num, numDecimalPlaces)
-	local mult = 10 ^ (numDecimalPlaces or 0)
-	return math.floor(num * mult + 0.5) / mult
-end
-
 function GetCurrentVehicleType(vehicle)
 	if not vehicle then
-		vehicle = GetVehiclePedIsIn(PlayerPedId(), true)
+		vehicle = GetVehiclePedIsIn(cache.ped, true)
 	end
 	if not vehicle then return false end
 	local vehModel = GetEntityModel(vehicle)
 	local vehiclename = string.lower(GetDisplayNameFromVehicleModel(vehModel))
 
-	if Config.ElectricVehicles[vehiclename] and Config.ElectricVehicles[vehiclename].isElectric then
+	if Config.ElectricVehicles[vehiclename] then
 		return 'electricvehicle'
 	else
 		return 'gasvehicle'
@@ -77,7 +72,7 @@ function CreateBlip(coords, label)
 	SetBlipScale(blip, 0.6)
 	SetBlipDisplay(blip, 4)
 	SetBlipAsShortRange(blip, true)
-	BeginTextCommandSetBlipName("STRING")
+	BeginTextCommandSetBlipName('STRING')
 	AddTextComponentString(label)
 	EndTextCommandSetBlipName(blip)
 	return blip
@@ -117,12 +112,12 @@ function IsVehicleBlacklisted(veh)
 		veh = string.lower(GetDisplayNameFromVehicleModel(GetEntityModel(veh)))
 		-- Puts Vehicles In Blacklist if you have electric charging on.
 		if not Config.ElectricVehicleCharging then
-			if Config.ElectricVehicles[veh] and Config.ElectricVehicles[veh].isElectric then
+			if Config.ElectricVehicles[veh] then
 				return true
 			end
 		end
 
-		if Config.NoFuelUsage[veh] and Config.NoFuelUsage[veh].blacklisted then
+		if Config.NoFuelUsage[veh] then
 			-- If the veh equals a vehicle in the list then return true.
 			return true
 		end

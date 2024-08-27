@@ -121,6 +121,104 @@ RegisterNetEvent('cdn-fuel:stations:client:buyreserves', function(data)
     TriggerServerEvent('cdn-fuel:stations:server:buyreserves', location, price, amount)
 end)
 
+local function startTankerThread()
+    CreateThread(function()
+        local ped = cache.ped
+        local alreadyHasTruck = false
+        local hasArrivedAtLocation = false
+        local VehicleDelivered = false
+        local EndAwaitListener = false
+        local stopNotifyTemp = false
+        local AwaitingInput = false
+        while true do
+            Wait(100)
+            if VehicleDelivered then break end
+            if cache.vehicle and cache.vehicle == spawnedDeliveryTruck then
+                if not alreadyHasTruck then
+                    local loc = {}
+                    loc = Config.GasStations[ReservePickupData.location].pedcoords
+                    SetNewWaypoint(loc.x, loc.y)
+                    SetUseWaypointAsDestination(true)
+                    alreadyHasTruck = true
+                else
+                    if not CreatedEventHandler then
+                        local function AwaitInput()
+                            if AwaitingInput then return end
+                            AwaitingInput = true
+                            CreateThread(function()
+                                while true do
+                                    Wait(0)
+                                    if EndAwaitListener or not hasArrivedAtLocation then
+                                        AwaitingInput = false
+                                        break
+                                    end
+                                    if IsControlJustReleased(2, 38) then
+                                        local distBetweenTruckAndTrailer = #(GetEntityCoords(spawnedDeliveryTruck) - GetEntityCoords(spawnedTankerTrailer))
+                                        if distBetweenTruckAndTrailer > 10.0 then
+                                            distBetweenTruckAndTrailer = nil
+                                            if not stopNotifyTemp then
+                                                QBOX:Notify(Lang:t('trailer_too_far'), 'error', 7500)
+                                            end
+                                            stopNotifyTemp = true
+                                            Wait(1000)
+                                            stopNotifyTemp = false
+                                        else
+                                            EndAwaitListener = true
+                                            local ped = cache.ped
+                                            VehicleDelivered = true
+                                            -- Handle Vehicle Dropoff
+                                            -- Remove PolyZone --
+                                            ReservePickupData.PolyZone:remove()
+                                            ReservePickupData.PolyZone = nil
+                                            -- Get Ped Out of Vehicle if Inside --
+                                            if cache.vehicle == spawnedDeliveryTruck then
+                                                TaskLeaveVehicle(ped, spawnedDeliveryTruck, 1 --[[ flags | integer ]])
+                                                Wait(5000)
+                                            end
+                                            lib.hideTextUI()
+
+                                            -- Remove Vehicle --
+                                            DeleteEntity(spawnedDeliveryTruck)
+                                            DeleteEntity(spawnedTankerTrailer)
+                                            -- Send Data to Server to Put Into Station --
+                                            TriggerServerEvent('cdn-fuel:station:server:fuelpickup:finished',
+                                                ReservePickupData.location)
+                                            -- Remove Handler
+                                            RemoveEventHandler(locationSwapHandler)
+                                            AwaitingInput = false
+                                            CreatedEventHandler = false
+                                            ReservePickupData = nil
+                                            ReservePickupData = {}
+                                            -- Break Loop
+                                            break
+                                        end
+                                    end
+                                end
+                            end)
+                            AwaitingInput = true
+                        end
+                        locationSwapHandler = AddEventHandler('cdn-fuel:stations:updatelocation', function(location)
+                            if location == nil or location ~= ReservePickupData.location then
+                                hasArrivedAtLocation = false
+                                lib.hideTextUI()
+                                -- Break Listener
+                                EndAwaitListener = true
+                                Wait(50)
+                                EndAwaitListener = false
+                            else
+                                hasArrivedAtLocation = true
+                                lib.showTextUI(Lang:t('draw_text_fuel_dropoff'), { position = 'left-center' })
+                                -- Add Listner for Keypress
+                                AwaitInput()
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+    end)
+end
+
 RegisterNetEvent('cdn-fuel:station:client:initiatefuelpickup',
     function(amountBought, finalReserveAmountAfterPurchase, location)
         if amountBought and finalReserveAmountAfterPurchase and location then
@@ -133,137 +231,29 @@ RegisterNetEvent('cdn-fuel:station:client:initiatefuelpickup',
 
             if SpawnPickupVehicles() then
                 QBOX:Notify(Lang:t('fuel_order_ready'), 'success')
-                SetNewWaypoint(Config.DeliveryTruckSpawns['truck'].x, Config.DeliveryTruckSpawns['truck'].y)
+                local truckSpawn = Config.DeliveryTruckSpawns.truck
+                SetNewWaypoint(truckSpawn.x, truckSpawn.y)
                 SetUseWaypointAsDestination(true)
-                ReservePickupData.blip = CreateBlip(
-                    vector3(Config.DeliveryTruckSpawns['truck'].x, Config.DeliveryTruckSpawns['truck'].y,
-                        Config.DeliveryTruckSpawns['truck'].z), 'Truck Pickup')
+                ReservePickupData.blip = CreateBlip(vec3(truckSpawn.x, truckSpawn.y, truckSpawn.z), 'Truck Pickup')
                 SetBlipColour(ReservePickupData.blip, 5)
 
                 -- Create Zone
-                -- ReservePickupData.PolyZone = lib.zones.poly({
-                --     name = 'cdn_fuel_zone_delivery_truck_pickup',
-                --     points = Config.DeliveryTruckSpawns.PolyZone.coords,
-                --     thickness = Config.DeliveryTruckSpawns.PolyZone.thickness,
-                --     debug = Config.PolyDebug
-                -- })
-
-                ReservePickupData.PolyZone = PolyZone:Create(Config.DeliveryTruckSpawns.PolyZone.coords, {
-                    name = 'cdn_fuel_zone_delivery_truck_pickup',
-                    minZ = Config.DeliveryTruckSpawns.PolyZone.minz,
-                    maxZ = Config.DeliveryTruckSpawns.PolyZone.maxz,
-                    debugPoly = Config.PolyDebug
+                ReservePickupData.PolyZone = lib.zones.poly({
+                    name = 'delivery_truck_pickup',
+                    points = Config.DeliveryTruckSpawns.coords,
+                    thickness = Config.DeliveryTruckSpawns.PolyZone.thickness,
+                    debug = Config.PolyDebug
                 })
 
-                -- Setup onPlayerInOut Events for zone that is created.
-                ReservePickupData.PolyZone:onPlayerInOut(function(isPointInside)
-                    if isPointInside then
-                        RemoveBlip(ReservePickupData.blip)
-                        ReservePickupData.blip = nil
-                        CreateThread(function()
-                            local ped = cache.ped
-                            local alreadyHasTruck = false
-                            local hasArrivedAtLocation = false
-                            local VehicleDelivered = false
-                            local EndAwaitListener = false
-                            local stopNotifyTemp = false
-                            local AwaitingInput = false
-                            while true do
-                                Wait(100)
-                                if VehicleDelivered then break end
-                                if IsPedInAnyVehicle(ped, false) then
-                                    if GetVehiclePedIsIn(ped, false) == spawnedDeliveryTruck then
-                                        if not alreadyHasTruck then
-                                            local loc = {}
-                                            loc = Config.GasStations[ReservePickupData.location].pedcoords
-                                            SetNewWaypoint(loc.x, loc.y)
-                                            SetUseWaypointAsDestination(true)
-                                            alreadyHasTruck = true
-                                        else
-                                            if not CreatedEventHandler then
-                                                local function AwaitInput()
-                                                    if AwaitingInput then return end
-                                                    AwaitingInput = true
-                                                    CreateThread(function()
-                                                        while true do
-                                                            Wait(0)
-                                                            if EndAwaitListener or not hasArrivedAtLocation then
-                                                                AwaitingInput = false
-                                                                break
-                                                            end
-                                                            if IsControlJustReleased(2, 38) then
-                                                                local distBetweenTruckAndTrailer = #(GetEntityCoords(spawnedDeliveryTruck) - GetEntityCoords(spawnedTankerTrailer))
-                                                                if distBetweenTruckAndTrailer > 10.0 then
-                                                                    distBetweenTruckAndTrailer = nil
-                                                                    if not stopNotifyTemp then
-                                                                        QBOX:Notify(
-                                                                            Lang:t('trailer_too_far'), 'error', 7500)
-                                                                    end
-                                                                    stopNotifyTemp = true
-                                                                    Wait(1000)
-                                                                    stopNotifyTemp = false
-                                                                else
-                                                                    EndAwaitListener = true
-                                                                    local ped = cache.ped
-                                                                    VehicleDelivered = true
-                                                                    -- Handle Vehicle Dropoff
-                                                                    -- Remove PolyZone --
-                                                                    ReservePickupData.PolyZone:destroy()
-                                                                    ReservePickupData.PolyZone = nil
-                                                                    -- Get Ped Out of Vehicle if Inside --
-                                                                    if IsPedInAnyVehicle(ped, true) and GetVehiclePedIsIn(ped, false) == spawnedDeliveryTruck then
-                                                                        TaskLeaveVehicle(ped, spawnedDeliveryTruck,
-                                                                            1 --[[ flags | integer ]])
-                                                                        Wait(5000)
-                                                                    end
-                                                                    lib.hideTextUI()
+                ReservePickupData.PolyZone.onExit = function()
 
-                                                                    -- Remove Vehicle --
-                                                                    DeleteEntity(spawnedDeliveryTruck)
-                                                                    DeleteEntity(spawnedTankerTrailer)
-                                                                    -- Send Data to Server to Put Into Station --
-                                                                    TriggerServerEvent(
-                                                                        'cdn-fuel:station:server:fuelpickup:finished',
-                                                                        ReservePickupData.location)
-                                                                    -- Remove Handler
-                                                                    RemoveEventHandler(locationSwapHandler)
-                                                                    AwaitingInput = false
-                                                                    CreatedEventHandler = false
-                                                                    ReservePickupData = nil
-                                                                    ReservePickupData = {}
-                                                                    -- Break Loop
-                                                                    break
-                                                                end
-                                                            end
-                                                        end
-                                                    end)
-                                                    AwaitingInput = true
-                                                end
-                                                locationSwapHandler = AddEventHandler('cdn-fuel:stations:updatelocation',
-                                                    function(location)
-                                                        if location == nil or location ~= ReservePickupData.location then
-                                                            hasArrivedAtLocation = false
-                                                            lib.hideTextUI()
-                                                            -- Break Listener
-                                                            EndAwaitListener = true
-                                                            Wait(50)
-                                                            EndAwaitListener = false
-                                                        else
-                                                            hasArrivedAtLocation = true
-                                                            lib.showTextUI(Lang:t('draw_text_fuel_dropoff'),
-                                                                { position = 'left-center' })
-                                                            -- Add Listner for Keypress
-                                                            AwaitInput()
-                                                        end
-                                                    end)
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                        end)
-                    end
-                end)
+                end
+
+                ReservePickupData.PolyZone.inside = function()
+                    RemoveBlip(ReservePickupData.blip)
+                    ReservePickupData.blip = nil
+                    startTankerThread()
+                end
             else
                 -- This is just a worst case scenario event, if the vehicles somehow do not spawn.
                 TriggerServerEvent('cdn-fuel:station:server:fuelpickup:failed', location)
@@ -296,22 +286,18 @@ end)
 RegisterNetEvent('cdn-fuel:stations:client:sellstation', function(data)
     local location = data.location
     local SalePrice = data.SalePrice
-    local CitizenID = QBX.PlayerData.citizenid
     CanSell = false
-    Wait(5)
-    lib.callback.await('cdn-fuel:server:isowner', false, function(result)
-        if result then
-            CanSell = true
-        else
-            QBOX:Notify(Lang:t('station_not_owner'), 'error', 7500)
-            CanSell = false
-        end
-    end, location)
+    local result = lib.callback.await('cdn-fuel:server:isowner', false, location)
+    if result then
+        CanSell = true
+    else
+        QBOX:Notify(Lang:t('station_not_owner'), 'error', 7500)
+        CanSell = false
+    end
+
     Wait(Config.WaitTime)
     if CanSell then
-        if Config.FuelDebug then print('Attempting to sell for: $' .. SalePrice) end
         TriggerServerEvent('cdn-fuel:stations:server:sellstation', location)
-        if Config.FuelDebug then print('Event Triggered') end
     else
         QBOX:Notify(Lang:t('station_cannot_sell'), 'error', 7500)
     end
@@ -382,7 +368,6 @@ RegisterNetEvent('cdn-fuel:stations:client:purchasereserves', function(data)
 
     if CanOpen then
         local bankmoney = QBX.PlayerData.money.bank
-        if Config.Ox.Input then
             local reserves = lib.inputDialog('Purchase Reserves', {
                 { type = 'input',  label = 'Current Price',                                                                                                                                                                                                 default = '$' .. Config.FuelReservesPrice .. ' Per Liter', disabled = true },
                 { type = 'input',  label = 'Current Reserves',                                                                                                                                                                                              default = Currentreserveamount,                            disabled = true },
@@ -414,7 +399,6 @@ RegisterNetEvent('cdn-fuel:stations:client:purchasereserves', function(data)
                     end
                 end
             end
-        end
     end
 end)
 
@@ -432,7 +416,6 @@ RegisterNetEvent('cdn-fuel:stations:client:changefuelprice', function(data)
     end, location)
     Wait(Config.WaitTime)
     if CanOpen then
-        if Config.Ox.Input then
             local fuelprice = lib.inputDialog('Fuel Prices', {
                 { type = 'input',  label = 'Current Price',                  default = '$' .. Comma_Value(StationFuelPrice) .. ' Per Liter', disabled = true },
                 { type = 'number', label = 'Enter New Fuel Price Per Liter', default = StationFuelPrice,                                     min = Config.MinimumFuelPrice, max = Config.MaxFuelPrice },
@@ -455,7 +438,7 @@ RegisterNetEvent('cdn-fuel:stations:client:changefuelprice', function(data)
                     TriggerServerEvent('cdn-fuel:station:server:updatefuelprice', NewFuelPrice, CurrentLocation)
                 end
             end
-        end
+        
     end
 end)
 
@@ -508,7 +491,6 @@ RegisterNetEvent('cdn-fuel:stations:client:changestationname',
         end, CurrentLocation)
         Wait(Config.WaitTime)
         if CanOpen then
-            if Config.Ox.Input then
                 local NewName = lib.inputDialog('Name Changer', {
                     { type = 'input', label = 'Current Name',           default = Config.GasStations[CurrentLocation].label, disabled = true },
                     { type = 'input', label = 'Enter New Station Name', placeholder = 'New Name' },
@@ -537,7 +519,7 @@ RegisterNetEvent('cdn-fuel:stations:client:changestationname',
                     Wait(100)
                     TriggerServerEvent('cdn-fuel:station:server:updatelocationname', NewName, CurrentLocation)
                 end
-            end
+            
         end
     end)
 
@@ -673,7 +655,6 @@ RegisterNetEvent('cdn-fuel:stations:client:managefunds',
     end)
 
 RegisterNetEvent('cdn-fuel:stations:client:WithdrawFunds', function(data)
-    if Config.FuelDebug then print('Triggered Event for: Withdraw!') end
     CanOpen = false
     local location = CurrentLocation
     lib.callback.await('cdn-fuel:server:isowner', false, function(result)
@@ -721,7 +702,6 @@ RegisterNetEvent('cdn-fuel:stations:client:WithdrawFunds', function(data)
 end)
 
 RegisterNetEvent('cdn-fuel:stations:client:DepositFunds', function(data)
-    if Config.FuelDebug then print('Triggered Event for: Deposit!') end
     CanOpen = false
     local location = CurrentLocation
     lib.callback.await('cdn-fuel:server:isowner', function(result)
@@ -737,7 +717,6 @@ RegisterNetEvent('cdn-fuel:stations:client:DepositFunds', function(data)
         local bankmoney = QBX.PlayerData.money.bank
         UpdateStationInfo('balance')
         Wait(50)
-        if Config.Ox.Input then
             local Deposit = lib.inputDialog('Deposit Funds', {
                 { type = 'input',  label = 'Current Station Balance', default = '$' .. Comma_Value(StationBalance), disabled = true },
                 { type = 'number', label = 'Deposit Amount' },
@@ -761,7 +740,7 @@ RegisterNetEvent('cdn-fuel:stations:client:DepositFunds', function(data)
                     TriggerServerEvent('cdn-fuel:station:server:Deposit', amount, location, StationBalance)
                 end
             end
-        end
+        
     end
 end)
 
@@ -804,7 +783,7 @@ RegisterNetEvent('cdn-fuel:stations:client:purchasemenu', function(location)
                 title = Lang:t('menu_purchase_station_confirm_header'),
                 description = 'I am interested in purchasing this station!',
                 icon = 'fas fa-usd',
-                arrow = true,     -- puts arrow to the right
+                arrow = true, -- puts arrow to the right
                 event = 'cdn-fuel:stations:client:purchaselocation',
                 args = {
                     location = location,

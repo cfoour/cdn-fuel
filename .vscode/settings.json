@@ -1,9 +1,0 @@
-{
-    "Lua.diagnostics.globals": [
-        "lib",
-        "fuelNozzle"
-    ],
-    "Lua.diagnostics.disable": [
-        "undefined-global"
-    ]
-}

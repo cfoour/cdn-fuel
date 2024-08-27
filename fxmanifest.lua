@@ -5,7 +5,7 @@ version '2.1.9'
 
 client_scripts {
     '@qbx_core/modules/playerdata.lua',
-    '@PolyZone/client.lua',
+    --'@PolyZone/client.lua',
     'client/fuel_cl.lua',
     'client/electric_cl.lua',
     'client/station_cl.lua',
@@ -13,16 +13,16 @@ client_scripts {
 }
 
 server_scripts {
+    '@oxmysql/lib/MySQL.lua',
     'server/fuel_sv.lua',
     'server/station_sv.lua',
     'server/electric_sv.lua',
-    '@oxmysql/lib/MySQL.lua',
 }
 
 shared_scripts {
-    'shared/config.lua',
-    '@qb-core/shared/locale.lua',
     '@ox_lib/init.lua',
+    '@qbx_core/modules/lib.lua',
+    'shared/config.lua',
     'locales/en.lua',
 }
 
@@ -34,10 +34,8 @@ exports {
 lua54 'yes'
 
 dependencies {
-    'PolyZone',
+    --'PolyZone',
     'interact-sound',
     'ox_lib',
     'ox_target',
 }
-
-provide 'cdn-syphoning' -- This is used to override cdn-syphoning(https://github.com/CodineDev/cdn-syphoning) if you have it installed. If you don't have it installed, don't worry about this. If you do, we recommend removing it and using this instead.
